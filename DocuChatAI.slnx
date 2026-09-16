@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/backend/" />
+  <Folder Name="/backend/src/">
+    <Project Path="backend/src/DocuChat.Api/DocuChat.Api.csproj" />
+    <Project Path="backend/src/DocuChat.Application/DocuChat.Application.csproj" />
+    <Project Path="backend/src/DocuChat.Domain/DocuChat.Domain.csproj" />
+    <Project Path="backend/src/DocuChat.Infrastructure/DocuChat.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/backend/tests/">
+    <Project Path="backend/tests/DocuChat.Tests/DocuChat.Tests.csproj" />
+  </Folder>
+</Solution>

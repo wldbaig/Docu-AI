@@ -1,0 +1,11 @@
+Northstar Labs — Team Handbook (Sample)
+
+Our mission is to make complex operational knowledge easy to find and act on. The company works remotely by default, with optional collaboration days at the Lahore office every Tuesday and Thursday.
+
+Employees receive 24 paid leave days per calendar year. Leave requests of three days or fewer should be submitted at least two business days in advance. Longer leave should be requested at least two weeks in advance. In emergencies, employees should notify their manager as soon as reasonably possible.
+
+The annual learning allowance is USD 1,200 per employee. It may be used for books, courses, certifications, and professional conferences. Hardware and general-purpose software are not covered by the learning allowance. Reimbursement requests require a receipt and manager approval and should be submitted within 30 days of purchase.
+
+Customer data must not be copied into personal accounts or unapproved tools. Suspected security incidents must be reported to security@northstarlabs.example immediately. Team members should not attempt to investigate a suspected breach on their own.
+
+Performance conversations happen quarterly. The first-quarter check-in focuses on goal setting, the second and third on progress and feedback, and the fourth on the annual review and next-year planning.

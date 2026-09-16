@@ -1,0 +1,25 @@
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+*.db
+*.db-shm
+*.db-wal
+.dotnet-home/
+.tools/
+**/.keys/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+*.tsbuildinfo
+
+# IDE / OS
+.vs/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+qdrant_storage/
