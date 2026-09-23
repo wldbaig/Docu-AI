@@ -15,15 +15,19 @@ public sealed class GeminiChatProvider(IHttpClientFactory clients, IOptions<AiOp
     {
         ProviderHttp.EnsureConfigured(_settings, Name);
         var model = _settings.ChatModel.StartsWith("models/", StringComparison.Ordinal) ? _settings.ChatModel : $"models/{_settings.ChatModel}";
-        using var request = new HttpRequestMessage(HttpMethod.Post, ProviderHttp.Endpoint(_settings, $"{model}:streamGenerateContent?alt=sse"));
-        request.Headers.Add("x-goog-api-key", _settings.ApiKey);
-        request.Content = JsonContent.Create(new
+        HttpRequestMessage BuildRequest()
         {
-            systemInstruction = new { parts = new[] { new { text = systemPrompt } } },
-            contents = new[] { new { role = "user", parts = new[] { new { text = userPrompt } } } },
-            generationConfig = new { temperature = 0.1 }
-        });
-        using var response = await clients.CreateClient("ai-providers").SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Post, ProviderHttp.Endpoint(_settings, $"{model}:streamGenerateContent?alt=sse"));
+            request.Headers.Add("x-goog-api-key", _settings.ApiKey);
+            request.Content = JsonContent.Create(new
+            {
+                systemInstruction = new { parts = new[] { new { text = systemPrompt } } },
+                contents = new[] { new { role = "user", parts = new[] { new { text = userPrompt } } } },
+                generationConfig = new { temperature = 0.1 }
+            });
+            return request;
+        }
+        using var response = await ProviderHttp.SendWithRetryAsync(clients.CreateClient("ai-providers"), BuildRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         await ProviderHttp.EnsureSuccessAsync(response, Name, cancellationToken);
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);

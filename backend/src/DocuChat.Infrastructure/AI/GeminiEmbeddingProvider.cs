@@ -14,10 +14,14 @@ public sealed class GeminiEmbeddingProvider(IHttpClientFactory clients, IOptions
     {
         ProviderHttp.EnsureConfigured(_settings, Name, embedding: true);
         var model = _settings.EmbeddingModel.StartsWith("models/", StringComparison.Ordinal) ? _settings.EmbeddingModel : $"models/{_settings.EmbeddingModel}";
-        using var request = new HttpRequestMessage(HttpMethod.Post, ProviderHttp.Endpoint(_settings, $"{model}:batchEmbedContents"));
-        request.Headers.Add("x-goog-api-key", _settings.ApiKey);
-        request.Content = JsonContent.Create(new { requests = inputs.Select(input => new { model, content = new { parts = new[] { new { text = input } } } }) });
-        using var response = await clients.CreateClient("ai-providers").SendAsync(request, cancellationToken);
+        HttpRequestMessage BuildRequest()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, ProviderHttp.Endpoint(_settings, $"{model}:batchEmbedContents"));
+            request.Headers.Add("x-goog-api-key", _settings.ApiKey);
+            request.Content = JsonContent.Create(new { requests = inputs.Select(input => new { model, content = new { parts = new[] { new { text = input } } } }) });
+            return request;
+        }
+        using var response = await ProviderHttp.SendWithRetryAsync(clients.CreateClient("ai-providers"), BuildRequest, HttpCompletionOption.ResponseContentRead, cancellationToken);
         await ProviderHttp.EnsureSuccessAsync(response, Name, cancellationToken);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(cancellationToken));
         return json.RootElement.GetProperty("embeddings").EnumerateArray()

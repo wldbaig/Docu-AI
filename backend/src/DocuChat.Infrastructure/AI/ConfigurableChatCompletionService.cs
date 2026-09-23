@@ -10,20 +10,27 @@ public sealed class ConfigurableChatCompletionService(
 {
     private readonly IReadOnlyDictionary<string, IChatModelProvider> _providers =
         providers.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
-    private readonly string _selected = options.Value.ChatProvider;
+    private readonly string _default = options.Value.ChatProvider;
 
     public async IAsyncEnumerable<string> StreamAsync(
         string systemPrompt,
         string userPrompt,
+        string? provider,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        if (!_providers.TryGetValue(_selected, out var provider))
+        var requested = string.IsNullOrWhiteSpace(provider) ? _default : provider;
+
+        if (!_providers.TryGetValue(requested, out var selected))
         {
-            throw new ExternalServiceException(
-                $"Unknown chat provider '{_selected}'. Available providers: {string.Join(", ", _providers.Keys)}.");
+            // A caller-supplied provider that we don't recognise is a bad request;
+            // a misconfigured default is a server-side configuration error.
+            var message = $"Unknown chat provider '{requested}'. Available providers: {string.Join(", ", _providers.Keys)}.";
+            throw string.IsNullOrWhiteSpace(provider)
+                ? new ExternalServiceException(message)
+                : new ValidationException(message);
         }
 
-        await foreach (var token in provider.StreamAsync(systemPrompt, userPrompt, cancellationToken)
+        await foreach (var token in selected.StreamAsync(systemPrompt, userPrompt, cancellationToken)
                            .WithCancellation(cancellationToken))
         {
             yield return token;

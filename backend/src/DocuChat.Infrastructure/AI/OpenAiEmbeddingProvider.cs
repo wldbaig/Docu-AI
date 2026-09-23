@@ -13,10 +13,14 @@ public sealed class OpenAiEmbeddingProvider(IHttpClientFactory clients, IOptions
     public async Task<IReadOnlyList<float[]>> CreateAsync(IReadOnlyList<string> inputs, CancellationToken cancellationToken)
     {
         ProviderHttp.EnsureConfigured(_settings, Name, embedding: true);
-        using var request = new HttpRequestMessage(HttpMethod.Post, ProviderHttp.Endpoint(_settings, "embeddings"));
-        ProviderHttp.AddBearer(request, _settings, Name);
-        request.Content = JsonContent.Create(new { model = _settings.EmbeddingModel, input = inputs });
-        using var response = await clients.CreateClient("ai-providers").SendAsync(request, cancellationToken);
+        HttpRequestMessage BuildRequest()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, ProviderHttp.Endpoint(_settings, "embeddings"));
+            ProviderHttp.AddBearer(request, _settings, Name);
+            request.Content = JsonContent.Create(new { model = _settings.EmbeddingModel, input = inputs });
+            return request;
+        }
+        using var response = await ProviderHttp.SendWithRetryAsync(clients.CreateClient("ai-providers"), BuildRequest, HttpCompletionOption.ResponseContentRead, cancellationToken);
         await ProviderHttp.EnsureSuccessAsync(response, Name, cancellationToken);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(cancellationToken));
         return json.RootElement.GetProperty("data").EnumerateArray().OrderBy(x => x.GetProperty("index").GetInt32())

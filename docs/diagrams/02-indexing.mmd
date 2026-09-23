@@ -1,0 +1,13 @@
+flowchart LR
+    A["📤 Upload<br/>PDF / TXT"] --> B["📝 Extract text"]
+    B --> C["✂️ Chunk<br/>~1,200 chars,<br/>200 overlap"]
+    C --> D["🧠 Embed<br/>batches of 32"]
+    D --> E[("🧭 Upsert vectors<br/>→ Qdrant")]
+    D --> F[("🗄️ Save metadata<br/>→ SQL Server")]
+    E --> G["✅ Status: Ready"]
+    F --> G
+
+    classDef step fill:#052e2b,stroke:#34d399,color:#d1fae5;
+    classDef store fill:#1e1b4b,stroke:#818cf8,color:#e0e7ff;
+    class A,B,C,D,G step;
+    class E,F store;
