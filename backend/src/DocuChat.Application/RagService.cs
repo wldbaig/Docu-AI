@@ -33,7 +33,7 @@ public sealed class RagService(
         for (var i = 0; i < sources.Length; i++)
             prompt.AppendLine($"[Source {i + 1}] File: {sources[i].FileName}, chunk {sources[i].ChunkIndex + 1}\n{sources[i].Content}\n");
         prompt.AppendLine($"QUESTION:\n{request.Question}");
-        return new RagContext(request.Question, sources, prompt.ToString());
+        return new RagContext(request.Question, sources, prompt.ToString(), request.Provider);
     }
 
     public async IAsyncEnumerable<string> StreamAnswerAsync(Guid userId, RagContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -41,7 +41,7 @@ public sealed class RagService(
         messages.Add(new ChatMessage { UserId = userId, Role = ChatRole.User, Content = context.Question });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         var answer = new StringBuilder();
-        await foreach (var token in chat.StreamAsync(SystemPrompt, context.GroundedPrompt, cancellationToken))
+        await foreach (var token in chat.StreamAsync(SystemPrompt, context.GroundedPrompt, context.Provider, cancellationToken))
         {
             answer.Append(token);
             yield return token;

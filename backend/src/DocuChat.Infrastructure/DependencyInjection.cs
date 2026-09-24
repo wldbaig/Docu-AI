@@ -13,7 +13,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AppDbContext>(options => options.UseSqlite(configuration.GetConnectionString("DefaultConnection") ?? "Data Source=docuchat.db"));
+        services.AddDbContext<AppDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
         services.Configure<VectorStoreOptions>(configuration.GetSection(VectorStoreOptions.SectionName));
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddSingleton<IEmbeddingModelProvider, GeminiEmbeddingProvider>();
         services.AddSingleton<IEmbeddingService, ConfigurableEmbeddingService>();
         services.AddSingleton<IChatCompletionService, ConfigurableChatCompletionService>();
+        services.AddSingleton<IProviderCatalog, ProviderCatalog>();
         services.AddSingleton<IVectorStore, QdrantVectorStore>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();

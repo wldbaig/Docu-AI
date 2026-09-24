@@ -10,8 +10,8 @@ public sealed class DocumentsController(IDocumentService documents) : Controller
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<DocumentDto>>> List(CancellationToken cancellationToken) => Ok(await documents.ListAsync(User.UserId(), cancellationToken));
 
-    [HttpPost, RequestSizeLimit(10 * 1024 * 1024)]
-    public async Task<ActionResult<DocumentDto>> Upload([FromForm] IFormFile file, CancellationToken cancellationToken)
+    [HttpPost, RequestSizeLimit(10 * 1024 * 1024), Consumes("multipart/form-data")]
+    public async Task<ActionResult<DocumentDto>> Upload(IFormFile file, CancellationToken cancellationToken)
     {
         await using var stream = file.OpenReadStream();
         var result = await documents.UploadAsync(User.UserId(), new UploadDocumentCommand(file.FileName, file.Length, stream), cancellationToken);

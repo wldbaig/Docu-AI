@@ -14,10 +14,14 @@ public sealed class CodexChatProvider(IHttpClientFactory clients, IOptions<AiOpt
     public async IAsyncEnumerable<string> StreamAsync(string systemPrompt, string userPrompt, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ProviderHttp.EnsureConfigured(_settings, Name);
-        using var request = new HttpRequestMessage(HttpMethod.Post, ProviderHttp.Endpoint(_settings, "responses"));
-        ProviderHttp.AddBearer(request, _settings, Name);
-        request.Content = JsonContent.Create(new { model = _settings.ChatModel, instructions = systemPrompt, input = userPrompt, stream = true, store = false });
-        using var response = await clients.CreateClient("ai-providers").SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        HttpRequestMessage BuildRequest()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, ProviderHttp.Endpoint(_settings, "responses"));
+            ProviderHttp.AddBearer(request, _settings, Name);
+            request.Content = JsonContent.Create(new { model = _settings.ChatModel, instructions = systemPrompt, input = userPrompt, stream = true, store = false });
+            return request;
+        }
+        using var response = await ProviderHttp.SendWithRetryAsync(clients.CreateClient("ai-providers"), BuildRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         await ProviderHttp.EnsureSuccessAsync(response, Name, cancellationToken);
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);

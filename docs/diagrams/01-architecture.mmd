@@ -1,0 +1,54 @@
+flowchart TB
+    subgraph client["🖥️  Frontend — React + Vite + TypeScript"]
+        UI["JWT auth · Upload &amp; status · Streaming chat · Source drawers"]
+    end
+
+    subgraph api["🌐  API — ASP.NET Core"]
+        CTRL["Controllers · JWT auth · SSE · Swagger · Global exception handler"]
+    end
+
+    subgraph app["⚙️  Application — use cases &amp; ports"]
+        UC["AuthService · DocumentService · RagService · TextChunker"]
+        PORTS["Ports (interfaces): IEmbeddingService · IVectorStore ·<br/>IChatCompletionService · IDocumentRepository · IUnitOfWork"]
+    end
+
+    subgraph domain["💎  Domain — entities"]
+        ENT["User · Document · Chunk · ChatMessage"]
+    end
+
+    subgraph infra["🔌  Infrastructure — adapters"]
+        AI["AI providers<br/>(OpenAI · Codex · Grok · Claude · Gemini · GLM)"]
+        VEC["QdrantVectorStore"]
+        DB["EF Core persistence"]
+        SEC["JWT &amp; password hashing"]
+    end
+
+    subgraph external["☁️  External services"]
+        SQL[("🗄️ SQL Server<br/>users · documents · chunks · chat")]
+        QDR[("🧭 Qdrant<br/>vectors + payload")]
+        LLM["🤖 AI provider APIs"]
+    end
+
+    UI -->|HTTPS / JSON| CTRL
+    CTRL -->|SSE stream| UI
+    CTRL --> UC
+    UC --> PORTS
+    UC --> ENT
+    PORTS -.implemented by.-> AI
+    PORTS -.implemented by.-> VEC
+    PORTS -.implemented by.-> DB
+    PORTS -.implemented by.-> SEC
+    AI --> LLM
+    VEC --> QDR
+    DB --> SQL
+
+    classDef c fill:#0b1220,stroke:#34d399,stroke-width:1px,color:#e2e8f0;
+    classDef a fill:#052e2b,stroke:#34d399,stroke-width:1px,color:#d1fae5;
+    classDef d fill:#064e3b,stroke:#6ee7b7,stroke-width:1px,color:#ecfdf5;
+    classDef i fill:#111827,stroke:#94a3b8,stroke-width:1px,color:#e2e8f0;
+    classDef e fill:#1e1b4b,stroke:#818cf8,stroke-width:1px,color:#e0e7ff;
+    class UI c;
+    class CTRL,UC,PORTS a;
+    class ENT d;
+    class AI,VEC,DB,SEC i;
+    class SQL,QDR,LLM e;

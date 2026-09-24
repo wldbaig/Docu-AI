@@ -1,0 +1,31 @@
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant FE as React Frontend
+    participant API as ChatController
+    participant RAG as RagService
+    participant EMB as IEmbeddingService
+    participant VEC as Qdrant
+    participant LLM as Chat provider
+    participant DB as SQL Server
+
+    U->>FE: Ask a question
+    FE->>API: POST /api/chat/ask  (JWT)
+    API->>RAG: PrepareAsync(userId, question)
+    RAG->>EMB: Embed the question
+    EMB-->>RAG: Question vector
+    RAG->>VEC: Cosine search (user + optional doc filter, topK)
+    VEC-->>RAG: Top matching chunks
+    RAG-->>API: Sources + grounded prompt
+    API-->>FE: SSE event: sources
+    API->>RAG: StreamAnswerAsync(...)
+    RAG->>DB: Save user message
+    RAG->>LLM: System prompt + grounded excerpts
+    loop Streamed tokens
+        LLM-->>RAG: token
+        RAG-->>API: token
+        API-->>FE: SSE event: token
+    end
+    RAG->>DB: Save assistant answer
+    API-->>FE: SSE event: done
+    FE-->>U: Grounded answer + cited sources

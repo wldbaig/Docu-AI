@@ -21,24 +21,28 @@ public abstract class OpenAiCompatibleChatProvider(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ProviderHttp.EnsureConfigured(_settings, Name);
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            ProviderHttp.Endpoint(_settings, "chat/completions"));
-        ProviderHttp.AddBearer(request, _settings, Name);
-        request.Content = JsonContent.Create(new
+        HttpRequestMessage BuildRequest()
         {
-            model = _settings.ChatModel,
-            stream = true,
-            temperature = 0.1,
-            messages = new[]
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                ProviderHttp.Endpoint(_settings, "chat/completions"));
+            ProviderHttp.AddBearer(request, _settings, Name);
+            request.Content = JsonContent.Create(new
             {
-                new { role = "system", content = systemPrompt },
-                new { role = "user", content = userPrompt }
-            }
-        });
+                model = _settings.ChatModel,
+                stream = true,
+                temperature = 0.1,
+                messages = new[]
+                {
+                    new { role = "system", content = systemPrompt },
+                    new { role = "user", content = userPrompt }
+                }
+            });
+            return request;
+        }
 
-        using var response = await clients.CreateClient("ai-providers")
-            .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await ProviderHttp.SendWithRetryAsync(
+            clients.CreateClient("ai-providers"), BuildRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         await ProviderHttp.EnsureSuccessAsync(response, Name, cancellationToken);
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
